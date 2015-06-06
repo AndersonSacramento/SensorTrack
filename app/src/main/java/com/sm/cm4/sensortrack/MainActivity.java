@@ -15,7 +15,7 @@ import android.widget.Toast;
 
 
 public class MainActivity extends ActionBarActivity  implements SensorEventListener {
-
+    //teste
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
     private float[] gravity = {0.0f,0.0f,0.0f};;

@@ -13,12 +13,16 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class MainActivity extends ActionBarActivity  implements SensorEventListener {
 
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
-    private float[] gravity = {0.0f,0.0f,0.0f};;
+    private float[] gravity = {0.0f,0.0f,0.0f};
     private float[] linear_acceleration = {0.0f,0.0f,0.0f};
     private float[] last_linear_acceleration = {0.0f,0.0f,0.0f};
     private float[] delta = {0.0f,0.0f,0.0f};
@@ -50,6 +54,10 @@ public class MainActivity extends ActionBarActivity  implements SensorEventListe
             Toast t = Toast.makeText(this,"NAO HA ACELEROMETRO",Toast.LENGTH_SHORT);
             t.show();
         }
+
+
+
+
     }
 
     @Override
@@ -145,6 +153,21 @@ public class MainActivity extends ActionBarActivity  implements SensorEventListe
     }
 
     public void onClickReset(View v){
+        try {
+            EventToCSV.write(MainActivity.this, new wrapperEvent<Float>() {
+                @Override
+                public List<Float> getData() {
+                    List<Float> data = new ArrayList<Float>();
+                    for(Float fd : linear_acceleration){
+                        data.add(fd);
+                    }
+                    return data;
+                }
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         curDelta[0] = 0.0f;
         curDelta[1] = 0.0f;
         curDelta[2] = 0.0f;

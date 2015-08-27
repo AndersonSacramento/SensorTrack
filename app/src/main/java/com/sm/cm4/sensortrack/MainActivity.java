@@ -1,55 +1,85 @@
 package com.sm.cm4.sensortrack;
-
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.OrientationEventListener;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.List;
 
-public class MainActivity extends ActionBarActivity  implements SensorEventListener {
+
+public class MainActivity extends ActionBarActivity implements SensorEventListener {
 
     private SensorManager mSensorManager;
+    //accelerometer
     private Sensor mAccelerometer;
-    private float[] gravity = {0.0f,0.0f,0.0f};;
-    private float[] linear_acceleration = {0.0f,0.0f,0.0f};
-    private float[] last_linear_acceleration = {0.0f,0.0f,0.0f};
-    private float[] delta = {0.0f,0.0f,0.0f};
-    private float[] curDelta = {0.0f,0.0f,0.0f};
-
+    private float[] gravity = {0.0f, 0.0f, 0.0f};
+    private float[] linear_acceleration = {0.0f, 0.0f, 0.0f};
+    private float[] last_linear_acceleration = {0.0f, 0.0f, 0.0f};
+    private float[] delta = {0.0f, 0.0f, 0.0f};
+    private float[] curDelta = {0.0f, 0.0f, 0.0f};
     private TextView textX, textY, textZ;
+    //orientation
+    OrientationEventListener mOrientationEventListener;
+    private TextView textAngle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        this.textX = (TextView) findViewById(R.id.x_axis);
+        this.textY = (TextView) findViewById(R.id.y_axis);
+        this.textZ = (TextView) findViewById(R.id.z_axis);
+        this.textAngle = (TextView) this.findViewById(R.id.angle);
+
+
+
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+
+        //**** acelerometro *******
+
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
-        if (mAccelerometer != null){
-            //Tem acelerometro
+        this.textX.setText("0.0");
+        this.textY.setText("0.0");
+        this.textZ.setText("0.0");
 
-            this.textX= (TextView)findViewById(R.id.x_axis);
-            this.textY= (TextView)findViewById(R.id.y_axis);
-            this.textZ= (TextView)findViewById(R.id.z_axis);
+        //**** orientation *******
 
-            this.textX.setText("0.0");
-            this.textY.setText("0.0");
-            this.textZ.setText("0.0");
+        this.textAngle.setText("NULL");
+
+        mOrientationEventListener = new OrientationEventListener(this, SensorManager.SENSOR_DELAY_NORMAL) {
+
+            @Override
+            public void onOrientationChanged(int arg0) {
+                textAngle.setText("Orientation: " + String.valueOf(arg0));
+            }
+        };
+
+        if (mOrientationEventListener.canDetectOrientation()) {
+            Toast.makeText(this, "Can DetectOrientation", Toast.LENGTH_LONG).show();
+            mOrientationEventListener.enable();
+        } else {
+            Toast.makeText(this, "Can't DetectOrientation", Toast.LENGTH_LONG).show();
         }
-        else {
-            //Nao ha acelerometro
-            Toast t = Toast.makeText(this,"NAO HA ACELEROMETRO",Toast.LENGTH_SHORT);
-            t.show();
+
+        //**** Detecta sensores do dispositivo *******
+        List<Sensor> sensors = mSensorManager.getSensorList(Sensor.TYPE_ALL);
+        for (Sensor sensor : sensors) {
+            Log.d("Sensors", "" + sensor.getName());
         }
+
+
     }
 
     @Override
@@ -78,12 +108,14 @@ public class MainActivity extends ActionBarActivity  implements SensorEventListe
     protected void onResume() {
         super.onResume();
         mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        mOrientationEventListener.enable();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         mSensorManager.unregisterListener(this);
+        mOrientationEventListener.disable();
     }
 
     @Override
@@ -91,7 +123,8 @@ public class MainActivity extends ActionBarActivity  implements SensorEventListe
         // Do something here if sensor accuracy changes.
     }
 
-    public void onSensorChanged(SensorEvent event){
+    public void onSensorChanged(SensorEvent event) {
+
 
         //************* Google Code *********************
 
@@ -119,17 +152,17 @@ public class MainActivity extends ActionBarActivity  implements SensorEventListe
         delta[2] = Math.abs(last_linear_acceleration[2] - linear_acceleration[2]);
 
 
-        if (delta[0] > curDelta[0]){
+        if (delta[0] > curDelta[0]) {
             curDelta[0] = delta[0];
             this.textX.setText(Float.toString(curDelta[0]));
         }
 
-        if (delta[1] > curDelta[1]){
+        if (delta[1] > curDelta[1]) {
             curDelta[1] = delta[1];
             this.textY.setText(Float.toString(curDelta[1]));
         }
 
-        if (delta[2] > curDelta[2]){
+        if (delta[2] > curDelta[2]) {
             curDelta[2] = delta[2];
             this.textZ.setText(Float.toString(curDelta[2]));
         }
@@ -144,7 +177,8 @@ public class MainActivity extends ActionBarActivity  implements SensorEventListe
 
     }
 
-    public void onClickReset(View v){
+
+    public void onClickResetAccelerometer(View v) {
         curDelta[0] = 0.0f;
         curDelta[1] = 0.0f;
         curDelta[2] = 0.0f;
@@ -152,6 +186,11 @@ public class MainActivity extends ActionBarActivity  implements SensorEventListe
         this.textX.setText(Float.toString(curDelta[0]));
         this.textY.setText(Float.toString(curDelta[1]));
         this.textZ.setText(Float.toString(curDelta[2]));
+    }
+
+    public void onClickResetRotation(View v) {
+        this.textAngle.setText("NULL");
+
     }
 
     /*

@@ -1,9 +1,11 @@
 package com.sm.cm4.sensortrack;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -31,12 +33,17 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     //orientation
     OrientationEventListener mOrientationEventListener;
     private TextView textAngle;
-
+    private String ip;
+    private int ipAddress;
+    public RestConnection rConnection;
+    public UDPSocketListener socketListener;
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        this.ip = getIpAddress();
         this.textX = (TextView) findViewById(R.id.x_axis);
         this.textY = (TextView) findViewById(R.id.y_axis);
         this.textZ = (TextView) findViewById(R.id.z_axis);
@@ -78,8 +85,9 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         for (Sensor sensor : sensors) {
             Log.d("Sensors", "" + sensor.getName());
         }
-
-
+	rConnection = new RestConnection();
+	socketListener = new UDPSocketListener(ip,rConnection);
+	socketListener.start();
     }
 
     @Override
@@ -97,10 +105,15 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+
+        if( id  == R.id.action_ip){
+            showIPDialog();
             return true;
         }
-
+        if(id == R.id.action_tasks){
+            showTaskList();
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
 
@@ -191,6 +204,27 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     public void onClickResetRotation(View v) {
         this.textAngle.setText("NULL");
 
+    }
+    private void showTaskList(){
+
+    }
+    private void showIPDialog(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+// 2. Chain together various setter methods to set the dialog characteristics
+        builder.setMessage(this.ip)
+                .setTitle(R.string.action_ip_device);
+
+// 3. Get the AlertDialog from create()
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+    private String getIpAddress() {
+        WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
+        this.ipAddress = wifiManager.getConnectionInfo().getIpAddress();
+        return String.format("%d.%d.%d.%d", (ipAddress & 0xff),
+                (ipAddress >> 8 & 0xff), (ipAddress >> 16 & 0xff),
+                (ipAddress >> 24 & 0xff));
     }
 
     /*

@@ -5,4 +5,6 @@
     <string name="action_settings">Settings</string>
     <string name="action_ip_device">IP device</string>
     <string name="action_tasks">Tasks</string>
+    <string name="fire">Do</string>
+    <string name="cancel">Cancel</string>
 </resources>

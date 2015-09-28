@@ -1,11 +1,14 @@
 package com.sm.cm4.sensortrack;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -16,6 +19,7 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -37,6 +41,7 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
     private int ipAddress;
     public RestConnection rConnection;
     public UDPSocketListener socketListener;
+    protected AlertDialog.Builder tasksBuilder;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -111,7 +116,8 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             return true;
         }
         if(id == R.id.action_tasks){
-            showTaskList();
+            getUndoneTasks();
+            showTaskList("searching...");
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -190,7 +196,6 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 
     }
 
-
     public void onClickResetAccelerometer(View v) {
         curDelta[0] = 0.0f;
         curDelta[1] = 0.0f;
@@ -205,8 +210,26 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
         this.textAngle.setText("NULL");
 
     }
-    private void showTaskList(){
+    private void showTaskList(String task){
+        tasksBuilder = new AlertDialog.Builder(this);
 
+// 2. Chain together various setter methods to set the dialog characteristics
+        tasksBuilder.setMessage(task)
+                .setTitle(R.string.action_tasks).setPositiveButton(R.string.fire, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+
+            }
+        })
+                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+
+                    }
+                });
+
+
+// 3. Get the AlertDialog from create()
+        AlertDialog dialog = tasksBuilder.create();
+        //dialog.show();
     }
     private void showIPDialog(){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -218,6 +241,13 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
 // 3. Get the AlertDialog from create()
         AlertDialog dialog = builder.create();
         dialog.show();
+    }
+
+    private void getUndoneTasks(){
+        ((GetTasksUndone) new GetTasksUndone())
+                .execute(null, null, null);
+
+
     }
     private String getIpAddress() {
         WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
@@ -260,5 +290,24 @@ public class MainActivity extends ActionBarActivity implements SensorEventListen
             this.textZ.setText(Float.toString(curDelta[2]));
         }
      */
+
+    private class GetTasksUndone extends AsyncTask<Void,Void, Void> {
+        private String tasks = null;
+        @Override
+        protected Void doInBackground(Void... params) {
+            // TODO Auto-generated method stub
+            tasks = rConnection.getLastUndoneTask(Build.MODEL);
+            return null;
+        }
+
+        protected void onPostExecute(Void result) {
+            Log.i("response","reponse task"+tasks);
+            tasksBuilder.setMessage(tasks);
+            tasksBuilder.show();
+
+
+        }
+    }
+
 
 }
